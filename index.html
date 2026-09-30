@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cotizador Móvil - PROTEKTA</title>
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PROTEKTA">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS para exportar a Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #1e40af;
+      --secondary: #3b82f6;
+      --accent: #10b981;
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --input-bg: #ffffff;
+      --uploader-bg: #f1f5f9;
+      --uploader-border: #cbd5e1;
+      --list-card-bg: #f8f9fa;
+      --shadow-subtle: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    [data-theme="dark"] {
+      --primary: #60a5fa;
+      --secondary: #3b82f6;
+      --accent: #34d399;
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --success: #34d399;
+      --input-bg: #0f172a;
+      --uploader-bg: #0f172a;
+      --uploader-border: #334155;
+      --list-card-bg: #111827;
+      --shadow-subtle: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-main); color: var(--text-primary); padding: 12px; font-size: 14px; transition: background-color 0.3s ease, color 0.3s ease; }
+
+    .container { 
+      max-width: 100%; 
+      margin: 0 auto; 
+      background: var(--bg-card); 
+      padding: 16px; 
+      border-radius: 12px; 
+      box-shadow: var(--shadow-subtle); 
+      border: 1px solid var(--border-color);
+    }
+
+    /* Barra de Gestión Optimizada para Móvil (Grid de Botones) */
+    .management-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn { 
+      padding: 10px 6px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center;
+      gap: 4px; 
+      font-size: 0.7rem; 
+      transition: all 0.2s ease; 
+    }
+    .btn i { font-size: 1rem; }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-save { background-color: var(--success); color: #fff; }
+    .btn-history { background-color: #475569; color: #fff; }
+    .btn-catalog { background-color: #7c3aed; color: #fff; }
+    .btn-theme { background-color: var(--border-color); color: var(--text-primary); }
+    .btn-excel { background-color: #0d9488; color: #fff; }
+    .btn-backup { background-color: #d97706; color: #fff; }
+    .btn-whatsapp { background-color: #059669; color: #fff; }
+    .btn-add-new { background-color: var(--secondary); color: #fff; }
+
+    /* Encabezado */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 15px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-img {
+      max-height: 50px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .brand-info h1 {
+      color: var(--primary);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .brand-info p {
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .quote-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--uploader-bg);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .quote-title h2 { font-size: 1rem; color: var(--primary); }
+
+    .logo-uploader {
+      margin-bottom: 15px;
+      background: var(--uploader-bg);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px dashed var(--uploader-border);
+    }
+    .logo-uploader input { font-size: 0.7rem; width: 65%; }
+
+    /* Datos del Cliente (Columna única) */
+    .form-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .input-group { display: flex; flex-direction: column; }
+    .input-group label { font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
+    .input-group input, .input-group select { 
+      padding: 10px; 
+      border: 1px solid var(--border-color); 
+      border-radius: 8px; 
+      font-size: 0.9rem; 
+      background-color: var(--input-bg);
+      color: var(--text-primary);
+    }
+
+    /* Conceptos en Tarjetas Móviles (Reemplaza tabla clásica para evitar scroll lateral) */
+    .mobile-items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .item-card {
+      background: var(--uploader-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .item-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .item-card select, .item-card input.desc {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .item-grid-calc {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr auto;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .item-grid-calc input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .item-total-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: right;
+    }
+
+    .btn-remove-card {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: none;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+
+    .btn-add-row {
+      width: 100%;
+      background-color: var(--secondary);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Totales y Notas Compactas */
+    .totals-container { background: var(--uploader-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.85rem; color: var(--text-secondary); }
+    .totals-row.final { font-size: 1.1rem; font-weight: 800; color: var(--primary); border-top: 1px solid var(--border-color); margin-top: 6px; padding-top: 6px; }
+
+    .notes-box { font-size: 0.7rem; color: var(--text-secondary); margin-top: 10px; border-top: 1px dashed var(--border-color); padding-top: 8px; }
+
+    .btn-print { background-color: var(--primary); color: #fff; width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 700; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+    /* Modales Móviles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      z-index: 1000;
+      align-items: flex-end;
+    }
+    .modal-content {
+      background: var(--bg-card);
+      padding: 20px 16px;
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-color);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .modal-header h3 { color: var(--primary); font-size: 1.1rem; }
+    .close-modal { background: none; border: none; font-size: 1.4rem; color: var(--text-secondary); }
+
+    .list-item-card {
+      background: var(--list-card-bg);
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border-color);
+      font-size: 0.85rem;
+    }
+
+    .backup-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .backup-box { background: var(--uploader-bg); padding: 12px; border-radius: 8px; border: 1px dashed var(--secondary); text-align: center; }
+
+    /* ===== AJUSTES PARA IPHONE 12 MINI Y PANTALLAS PEQUEÑAS ===== */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      min-width: 0;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(12px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+
+    button, input, select {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input, select, button {
+      min-height: 44px;
+    }
+
+    .container {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+    }
+
+    .management-bar {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .btn {
+      min-height: 52px;
+      padding: 7px 3px;
+      font-size: 0.64rem;
+      line-height: 1.1;
+      white-space: normal;
+    }
+
+    .btn i { font-size: 0.95rem; }
+
+    .brand-header {
+      gap: 9px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+    }
+
+    .logo-container {
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .logo-img {
+      width: auto;
+      max-width: 92px;
+      max-height: 48px;
+    }
+
+    .brand-info { min-width: 0; }
+    .brand-info h1 { font-size: 1.18rem; }
+    .brand-info p { font-size: 0.62rem; }
+
+    .quote-title {
+      padding: 9px 10px;
+    }
+
+    .quote-title h2 { font-size: 0.92rem; }
+
+    .form-section { gap: 9px; margin-bottom: 15px; }
+    .input-group label { font-size: 0.72rem; }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 11px;
+      font-size: 16px; /* evita zoom automático de Safari */
+    }
+
+    .mobile-items-container { gap: 9px; }
+
+    .item-card {
+      padding: 10px;
+      border-radius: 11px;
+    }
+
+    .item-card select,
+    .item-card input.desc,
+    .item-grid-calc input {
+      min-height: 42px;
+      font-size: 16px; /* evita zoom automático de Safari */
+    }
+
+    .item-grid-calc {
+      grid-template-columns: 0.8fr 1.2fr 1.15fr 44px;
+      gap: 6px;
+    }
+
+    .btn-remove-card {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+    }
+
+    .btn-add-row, .btn-print {
+      min-height: 48px;
+      font-size: 0.9rem;
+    }
+
+    .totals-container {
+      padding: 11px;
+    }
+
+    .totals-row {
+      min-height: 30px;
+      align-items: center;
+    }
+
+    #taxRate {
+      min-height: 38px !important;
+      font-size: 16px !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--text-primary);
+    }
+
+    .modal-content {
+      max-height: 90vh;
+      padding: 16px 12px max(16px, env(safe-area-inset-bottom));
+    }
+
+    @media (max-width: 375px) {
+      .container { padding: 10px; }
+      .management-bar { gap: 4px; }
+      .btn { min-height: 50px; font-size: 0.59rem; }
+      .btn i { font-size: 0.88rem; }
+      .logo-img { max-width: 78px; max-height: 44px; }
+      .brand-info h1 { font-size: 1.05rem; }
+      .brand-info p { font-size: 0.56rem; }
+      .item-grid-calc { grid-template-columns: 0.75fr 1.1fr 1fr 42px; }
+    }
+
+
+    /* ===== DOCUMENTO PROFESIONAL PARA PDF / IMPRESIÓN ===== */
+    .print-document {
+      display: none;
+      background: #fff;
+      color: #1e293b;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .print-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 22px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .print-brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .print-brand img {
+      width: auto;
+      max-width: 190px;
+      max-height: 72px;
+      object-fit: contain;
+    }
+
+    .print-brand-name {
+      color: #1e40af;
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .print-brand-subtitle {
+      margin-top: 4px;
+      color: #64748b;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .07em;
+    }
+
+    .print-title {
+      text-align: right;
+    }
+
+    .print-title h2 {
+      margin: 0;
+      color: #1e40af;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .print-title div {
+      margin-top: 4px;
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .print-client {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr .7fr;
+      gap: 14px;
+      margin-bottom: 25px;
+    }
+
+    .print-client > div {
+      padding: 11px 13px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+    }
+
+    .print-client strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #64748b;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .print-client span {
+      display: block;
+      color: #1e293b;
+      font-size: 11px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .print-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+
+    .print-table th {
+      padding: 10px 9px;
+      background: #f8fafc;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .05em;
+    }
+
+    .print-table td {
+      padding: 10px 9px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+      font-size: 10px;
+      vertical-align: top;
+    }
+
+    .print-table td:nth-child(2) {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .print-table td:nth-child(3),
+    .print-table td:nth-child(4) {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .print-bottom {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 25px;
+      align-items: start;
+    }
+
+    .print-notes {
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #3b82f6;
+      border-radius: 7px;
+      color: #64748b;
+    }
+
+    .print-notes-title {
+      margin-bottom: 7px;
+      color: #1e293b;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .print-notes ul {
+      margin: 0;
+      padding-left: 17px;
+    }
+
+    .print-notes li {
+      margin-bottom: 4px;
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .print-totals {
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+    }
+
+    .print-totals > div {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 5px 0;
+      color: #64748b;
+      font-size: 10px;
+    }
+
+    .print-totals strong {
+      color: #1e293b;
+    }
+
+    .print-grand-total {
+      margin-top: 6px;
+      padding-top: 10px !important;
+      border-top: 2px solid #e2e8f0;
+      color: #1e40af !important;
+      font-size: 15px !important;
+      font-weight: 800;
+    }
+
+    .print-grand-total strong {
+      color: #1e40af;
+      font-size: 15px;
+    }
+
+    .print-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 35px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      color: #94a3b8;
+      font-size: 8px;
+    }
+
+    @media (max-width: 380px) {
+      .print-client { grid-template-columns: 1fr; }
+      .print-bottom { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+
+      html, body {
+        background: #fff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      body {
+        color: #1e293b !important;
+      }
+
+      .container {
+        display: none !important;
+      }
+
+      .print-document {
+        display: block !important;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .print-table tr,
+      .print-client > div,
+      .print-notes,
+      .print-totals {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Barra de Acciones Móvil -->
+  <div class="management-bar">
+    <button class="btn btn-save" onclick="guardarCotizacion()"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+    <button class="btn btn-history" onclick="abrirHistorial()"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
+    <button class="btn btn-catalog" onclick="abrirCatalogo()"><i class="fa-solid fa-boxes-stacked"></i> Catálogo</button>
+    <button class="btn btn-theme" onclick="toggleTheme()" id="themeToggleBtn"><i class="fa-solid fa-moon"></i> Tema</button>
+    <button class="btn btn-excel" onclick="exportarExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+    <button class="btn btn-whatsapp" onclick="enviarWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+    <button class="btn btn-backup" onclick="abrirRespaldoModal()"><i class="fa-solid fa-database"></i> Respaldos</button>
+    <button class="btn btn-add-new" onclick="nuevaCotizacion()"><i class="fa-solid fa-plus"></i> Nuevo</button>
+  </div>
+
+  <!-- Encabezado -->
+  <div class="brand-header">
+    <div class="logo-container">
+      <img id="brandLogo" class="logo-img" src="image/logo.png" alt="Logo PROTEKTA">
+      <div class="brand-info">
+        <h1>PROTEKTA</h1>
+        <p>Seguridad & Smart Home</p>
+      </div>
+    </div>
+    <div class="quote-title">
+      <h2>PRESUPUESTO</h2>
+      <span id="quoteFolioDisplay" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Folio: Nuevo</span>
+    </div>
+  </div>
+
+  <!-- Datos del Cliente -->
+  <div class="form-section">
+    <div class="input-group">
+      <label>Cliente / Empresa</label>
+      <input type="text" id="clientName" placeholder="Nombre del cliente">
+    </div>
+    <div class="input-group">
+      <label>WhatsApp / Teléfono</label>
+      <input type="tel" id="clientPhone" placeholder="Ej. 6871234567">
+    </div>
+    <div class="input-group">
+      <label>Fecha</label>
+      <input type="date" id="quoteDate">
+    </div>
+  </div>
+
+  <!-- Lista de Conceptos Estilo Tarjetas Móviles -->
+  <div id="mobileItemsContainer" class="mobile-items-container">
+    <!-- Se generan por JS -->
+  </div>
+
+  <button class="btn-add-row" onclick="addRow()"><i class="fa-solid fa-plus"></i> Agregar Concepto</button>
+
+  <!-- Totales -->
+  <div class="totals-container">
+    <div class="totals-row">
+      <span>Subtotal:</span>
+      <span id="subtotal">$0.00</span>
+    </div>
+    <div class="totals-row">
+      <span>IVA / Impuestos (%):</span>
+      <input type="number" id="taxRate" value="16" min="0" style="width: 55px; text-align: right; padding: 2px; font-size: 0.85rem;" oninput="calculateTotals()">
+    </div>
+    <div class="totals-row">
+      <span>Impuestos:</span>
+      <span id="taxAmount">$0.00</span>
+    </div>
+    <div class="totals-row final">
+      <span>Total:</span>
+      <span id="totalFinal">$0.00</span>
+    </div>
+
+    <div class="notes-box">
+      <strong>Condiciones:</strong> Válido por 15 días. Anticipo del 50%.
+    </div>
+  </div>
+
+  <button class="btn-print" onclick="prepararImpresion()"><i class="fa-solid fa-file-pdf"></i> Generar PDF / Imprimir</button>
+
+</div>
+
+<!-- DOCUMENTO PROFESIONAL PARA IMPRIMIR / GUARDAR COMO PDF -->
+<div id="printDocument" class="print-document">
+  <div class="print-header">
+    <div class="print-brand">
+      <img id="printLogo" src="image/logo.png" alt="PROTEKTA">
+      <div>
+        <div class="print-brand-name">PROTEKTA</div>
+        <div class="print-brand-subtitle">SISTEMAS DE SEGURIDAD & SMART HOME</div>
+      </div>
+    </div>
+    <div class="print-title">
+      <h2>PRESUPUESTO</h2>
+      <div id="printFolio">Folio: Nuevo</div>
+    </div>
+  </div>
+
+  <div class="print-client">
+    <div><strong>Cliente / Empresa</strong><span id="printClient">Cliente General</span></div>
+    <div><strong>Teléfono / WhatsApp</strong><span id="printPhone">—</span></div>
+    <div><strong>Fecha</strong><span id="printDate">—</span></div>
+  </div>
+
+  <table class="print-table">
+    <thead>
+      <tr>
+        <th style="width:48%;">CONCEPTO / DESCRIPCIÓN</th>
+        <th style="width:12%; text-align:center;">CANT.</th>
+        <th style="width:20%; text-align:right;">PRECIO UNIT.</th>
+        <th style="width:20%; text-align:right;">IMPORTE</th>
+      </tr>
+    </thead>
+    <tbody id="printItems"></tbody>
+  </table>
+
+  <div class="print-bottom">
+    <div class="print-notes">
+      <div class="print-notes-title">NOTAS Y CONDICIONES</div>
+      
+      <ul>
+        <li>Esta cotización no constituye un contrato y únicamente presenta los equipos y servicios cotizados. Losprecios tienen una vigencia de 2 días naturales y están sujetos a disponibilidad y posibles cambios de proveedor. La reservase confirma mediante anticipo y aceptación de la cotización. Cualquier material o trabajo adicional no especificado serácotizado por separado..</li>
+        <li>Incluye garantía en equipos por el proveedor e instalación profesional.</li>
+        
+      </ul>
+
+    </div>
+
+    <div class="print-totals">
+      <div><span>Subtotal:</span><strong id="printSubtotal">$0.00</strong></div>
+      <div><span>IVA (<span id="printTaxRate">16</span>%):</span><strong id="printTax">$0.00</strong></div>
+      <div class="print-grand-total"><span>TOTAL:</span><strong id="printTotal">$0.00</strong></div>
+    </div>
+  </div>
+
+  <div class="print-footer">
+    <span>PROTEKTA · Seguridad · Alarmas · CCTV · Smart Home</span>
+    <span>Gracias por su preferencia</span>
+  </div>
+</div>
+
+<!-- MODAL: CATÁLOGO -->
+<div id="catalogModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Catálogo de Productos</h3>
+      <button class="close-modal" onclick="cerrarCatalogo()">&times;</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+      <input type="text" id="newCatDesc" placeholder="Nombre del servicio o equipo" style="padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; background:var(--input-bg); color:var(--text-primary); font-size:0.85rem;">
+      <input type="number" id="newCatPrice" placeholder="Precio $" step="0.01" style="padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; background:var(--input-bg); color:var(--text-primary); font-size:0.85rem;">
+      <button class="btn btn-add-new" style="padding: 10px;" onclick="agregarAlCatalogo()"><i class="fa-solid fa-plus"></i> Añadir al Catálogo</button>
+    </div>
+    <div id="catalogListContainer"></div>
+  </div>
+</div>
+
+<!-- MODAL: HISTORIAL -->
+<div id="historyModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Cotizaciones Guardadas</h3>
+      <button class="close-modal" onclick="cerrarHistorial()">&times;</button>
+    </div>
+    <div id="historyListContainer"></div>
+  </div>
+</div>
+
+<!-- MODAL: RESPALDOS -->
+<div id="backupModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Respaldos JSON</h3>
+      <button class="close-modal" onclick="cerrarRespaldoModal()">&times;</button>
+    </div>
+    <div class="backup-grid">
+      <div class="backup-box">
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Guarda toda tu información en un archivo.</p>
+        <button class="btn btn-backup" style="width:150px; margin:0 auto;" onclick="exportarJSON()"><i class="fa-solid fa-download"></i> Descargar</button>
+      </div>
+      <div class="backup-box">
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">Restaura desde un respaldo previo.</p>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importarJSON(event)">
+        <button class="btn btn-save" style="width:150px; margin:0 auto;" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-upload"></i> Cargar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initTheme() {
+    const savedTheme = localStorage.getItem('protekta_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeButtonIcon(savedTheme);
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('protekta_theme', newTheme);
+    updateThemeButtonIcon(newTheme);
+  }
+
+  function updateThemeButtonIcon(theme) {
+    const btn = document.getElementById('themeToggleBtn');
+    if (theme === 'dark') {
+      btn.innerHTML = '<i class="fa-solid fa-sun"></i> Claro';
+    } else {
+      btn.innerHTML = '<i class="fa-solid fa-moon"></i> Oscuro';
+    }
+  }
+
+  let catalog = JSON.parse(localStorage.getItem('protekta_catalog')) || [
+    { desc: "Cámara IP 4MP Exterior HD", price: 1250.00 },
+    { desc: "Kit DVR 4 Canales + DD 1TB + Inst.", price: 4500.00 },
+    { desc: "Cerca Eléctrica (Metro lineal)", price: 350.00 },
+    { desc: "Kit Alarma Vecinal Wi-Fi", price: 2800.00 },
+    { desc: "Chapa Inteligente Biométrica", price: 3200.00 },
+    { desc: "Visita Técnica Diagnóstico", price: 500.00 }
+  ];
+
+  let currentQuoteId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    document.getElementById('quoteDate').valueAsDate = new Date();
+    if(document.querySelectorAll('.item-card').length === 0) {
+      addRow();
+    }
+  });
+
+  function addRow(descVal = '', priceVal = 0, qtyVal = 1) {
+    const container = document.getElementById('mobileItemsContainer');
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    
+    let optionsHtml = '<option value="">-- Seleccionar producto --</option>';
+    catalog.forEach(item => {
+      const selected = item.desc === descVal ? 'selected' : '';
+      optionsHtml += `<option value="${item.desc}" data-price="${item.price}" ${selected}>${item.desc} ($${item.price.toFixed(2)})</option>`;
+    });
+
+    card.innerHTML = `
+      <select class="catalog-select" onchange="onCatalogSelect(this)">
+        ${optionsHtml}
+      </select>
+      <input type="text" placeholder="Descripción libre del concepto" class="desc" value="${descVal}">
+      <div class="item-grid-calc">
+        <div>
+          <label style="font-size:0.65rem; color:var(--text-secondary)">Cant</label>
+          <input type="number" value="${qtyVal}" min="1" class="qty" oninput="calculateTotals()">
+        </div>
+        <div>
+          <label style="font-size:0.65rem; color:var(--text-secondary)">Precio ($)</label>
+          <input type="number" value="${priceVal}" min="0" step="0.01" class="price" oninput="calculateTotals()">
+        </div>
+        <div>
+          <label style="font-size:0.65rem; color:var(--text-secondary)">Total</label>
+          <div class="item-total-text amount">$0.00</div>
+        </div>
+        <button class="btn-remove-card" onclick="removeCard(this)"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    `;
+    container.appendChild(card);
+    calculateTotals();
+  }
+
+  function onCatalogSelect(selectElement) {
+    const card = selectElement.closest('.item-card');
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const descInput = card.querySelector('.desc');
+    const priceInput = card.querySelector('.price');
+
+    if (selectElement.value) {
+      descInput.value = selectElement.value;
+      priceInput.value = selectedOption.getAttribute('data-price');
+      calculateTotals();
+    }
+  }
+
+  function removeCard(button) {
+    const card = button.closest('.item-card');
+    if (document.querySelectorAll('.item-card').length > 1) {
+      card.remove();
+      calculateTotals();
+    }
+  }
+
+  function calculateTotals() {
+    const cards = document.querySelectorAll('.item-card');
+    let subtotal = 0;
+
+    cards.forEach(card => {
+      const qty = parseFloat(card.querySelector('.qty').value) || 0;
+      const price = parseFloat(card.querySelector('.price').value) || 0;
+      const amount = qty * price;
+      
+      card.querySelector('.amount').textContent = `$${amount.toFixed(2)}`;
+      subtotal += amount;
+    });
+
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+    const taxAmount = subtotal * (taxRate / 100);
+    const total = subtotal + taxAmount;
+
+    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('taxAmount').textContent = `$${taxAmount.toFixed(2)}`;
+    document.getElementById('totalFinal').textContent = `$${total.toFixed(2)}`;
+  }
+
+
+  // --- PREPARAR DOCUMENTO PROFESIONAL PARA PDF ---
+  function prepararImpresion() {
+    const client = document.getElementById('clientName').value.trim() || 'Cliente General';
+    const phone = document.getElementById('clientPhone').value.trim() || '—';
+    const dateValue = document.getElementById('quoteDate').value;
+    const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+
+    let dateText = '—';
+    if (dateValue) {
+      const parts = dateValue.split('-');
+      if (parts.length === 3) dateText = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    document.getElementById('printClient').textContent = client;
+    document.getElementById('printPhone').textContent = phone;
+    document.getElementById('printDate').textContent = dateText;
+    document.getElementById('printFolio').textContent =
+      document.getElementById('quoteFolioDisplay').textContent || 'Folio: Nuevo';
+
+    const printItems = document.getElementById('printItems');
+    printItems.innerHTML = '';
+
+    let subtotal = 0;
+
+    document.querySelectorAll('.item-card').forEach(card => {
+      const desc = card.querySelector('.desc').value.trim();
+      const qty = parseFloat(card.querySelector('.qty').value) || 0;
+      const price = parseFloat(card.querySelector('.price').value) || 0;
+      const amount = qty * price;
+
+      if (desc || qty || price) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${desc || 'Concepto sin descripción'}</td>
+          <td>${qty}</td>
+          <td>$${price.toFixed(2)}</td>
+          <td>$${amount.toFixed(2)}</td>
+        `;
+        printItems.appendChild(tr);
+      }
+
+      subtotal += amount;
+    });
+
+    const tax = subtotal * (taxRate / 100);
+    const total = subtotal + tax;
+
+    document.getElementById('printSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('printTaxRate').textContent = taxRate;
+    document.getElementById('printTax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('printTotal').textContent = `$${total.toFixed(2)}`;
+
+    // Asegura que el logo local sea siempre el utilizado en el PDF.
+    document.getElementById('printLogo').src = 'image/logo.png';
+
+    setTimeout(() => window.print(), 80);
+  }
+
+  // Modales
+  function abrirCatalogo() { document.getElementById('catalogModal').style.display = 'flex'; renderList(); }
+  function cerrarCatalogo() { document.getElementById('catalogModal').style.display = 'none'; actualizarSelects(); }
+  function abrirHistorial() { document.getElementById('historyModal').style.display = 'flex'; renderHistory(); }
+  function cerrarHistorial() { document.getElementById('historyModal').style.display = 'none'; }
+  function abrirRespaldoModal() { document.getElementById('backupModal').style.display = 'flex'; }
+  function cerrarRespaldoModal() { document.getElementById('backupModal').style.display = 'none'; }
+
+  function renderList() {
+    const c = document.getElementById('catalogListContainer');
+    c.innerHTML = '';
+    catalog.forEach((item, idx) => {
+      c.innerHTML += `
+        <div class="list-item-card">
+          <div><strong>${item.desc}</strong><br><span style="color:var(--success);">$${item.price.toFixed(2)}</span></div>
+          <button class="btn-remove-card" onclick="delCat(${idx})"><i class="fa-solid fa-trash"></i></button>
+        </div>`;
+    });
+  }
+
+  function agregarAlCatalogo() {
+    const desc = document.getElementById('newCatDesc').value.trim();
+    const price = parseFloat(document.getElementById('newCatPrice').value);
+    if(!desc || isNaN(price)) return alert("Datos incompletos");
+    catalog.push({ desc, price });
+    localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+    document.getElementById('newCatDesc').value = '';
+    document.getElementById('newCatPrice').value = '';
+    renderList();
+  }
+
+  function delCat(idx) {
+    catalog.splice(idx, 1);
+    localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+    renderList();
+  }
+
+  function actualizarSelects() {
+    document.querySelectorAll('.catalog-select').forEach(sel => {
+      const val = sel.value;
+      let opts = '<option value="">-- Seleccionar producto --</option>';
+      catalog.forEach(item => { opts += `<option value="${item.desc}" data-price="${item.price}">${item.desc} ($${item.price.toFixed(2)})</option>`; });
+      sel.innerHTML = opts;
+      sel.value = val;
+    });
+  }
+
+  function guardarCotizacion() {
+    const clientName = document.getElementById('clientName').value.trim() || "Cliente General";
+    const clientPhone = document.getElementById('clientPhone').value.trim();
+    const quoteDate = document.getElementById('quoteDate').value;
+    const taxRate = document.getElementById('taxRate').value;
+    
+    let items = [];
+    document.querySelectorAll('.item-card').forEach(card => {
+      items.push({
+        desc: card.querySelector('.desc').value,
+        qty: card.querySelector('.qty').value,
+        price: card.querySelector('.price').value
+      });
+    });
+
+    const totalFinal = document.getElementById('totalFinal').textContent;
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    
+    if(!currentQuoteId) currentQuoteId = 'COT-' + Date.now().toString().slice(-6);
+
+    const data = { id: currentQuoteId, clientName, clientPhone, quoteDate, taxRate, items, totalFinal };
+    const idx = quotes.findIndex(q => q.id === currentQuoteId);
+    if(idx >= 0) quotes[idx] = data; else quotes.push(data);
+
+    localStorage.setItem('protekta_quotes', JSON.stringify(quotes));
+    document.getElementById('quoteFolioDisplay').textContent = `Folio: #${currentQuoteId}`;
+    alert(`Guardado con éxito (Folio: #${currentQuoteId})`);
+  }
+
+  function renderHistory() {
+    const c = document.getElementById('historyListContainer');
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    if(quotes.length === 0) { c.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:15px;">Sin guardados</p>'; return; }
+    c.innerHTML = '';
+    quotes.forEach(q => {
+      c.innerHTML += `
+        <div class="list-item-card">
+          <div><strong>#${q.id} - ${q.clientName}</strong><br><small>${q.quoteDate} | ${q.totalFinal}</small></div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-add-new" style="padding:6px 10px;" onclick="loadQuote('${q.id}')"><i class="fa-solid fa-folder-open"></i></button>
+            <button class="btn-remove-card" onclick="delQuote('${q.id}')"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>`;
+    });
+  }
+
+  function loadQuote(id) {
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    const q = quotes.find(item => item.id === id);
+    if(!q) return;
+    currentQuoteId = q.id;
+    document.getElementById('quoteFolioDisplay').textContent = `Folio: #${q.id}`;
+    document.getElementById('clientName').value = q.clientName;
+    document.getElementById('clientPhone').value = q.clientPhone;
+    document.getElementById('quoteDate').value = q.quoteDate;
+    document.getElementById('taxRate').value = q.taxRate;
+    
+    const container = document.getElementById('mobileItemsContainer');
+    container.innerHTML = '';
+    q.items.forEach(i => addRow(i.desc, parseFloat(i.price), parseInt(i.qty)));
+    cerrarHistorial();
+  }
+
+  function delQuote(id) {
+    if(!confirm("¿Eliminar?")) return;
+    let quotes = JSON.parse(localStorage.getItem('protekta_quotes')) || [];
+    quotes = quotes.filter(q => q.id !== id);
+    localStorage.setItem('protekta_quotes', JSON.stringify(quotes));
+    renderHistory();
+  }
+
+  function nuevaCotizacion() {
+    if(confirm("¿Iniciar nueva cotización?")) {
+      currentQuoteId = null;
+      document.getElementById('quoteFolioDisplay').textContent = 'Folio: Nuevo';
+      document.getElementById('clientName').value = '';
+      document.getElementById('clientPhone').value = '';
+      document.getElementById('quoteDate').valueAsDate = new Date();
+      document.getElementById('mobileItemsContainer').innerHTML = '';
+      addRow();
+    }
+  }
+
+  function exportarExcel() {
+    const client = document.getElementById('clientName').value || "Cliente";
+    let ws_data = [["PROTEKTA - PRESUPUESTO"], [], ["Cliente:", client], [], ["Concepto", "Cant", "P. Unit", "Total"]];
+    let sub = 0;
+    document.querySelectorAll('.item-card').forEach(card => {
+      const desc = card.querySelector('.desc').value;
+      const qty = parseFloat(card.querySelector('.qty').value) || 0;
+      const price = parseFloat(card.querySelector('.price').value) || 0;
+      const amt = qty * price;
+      sub += amt;
+      ws_data.push([desc, qty, price, amt]);
+    });
+    const tax = sub * ((parseFloat(document.getElementById('taxRate').value) || 0) / 100);
+    ws_data.push([], ["", "", "Subtotal:", sub], ["", "", "IVA:", tax], ["", "", "Total:", sub + tax]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ws_data), "Cotizacion");
+    XLSX.writeFile(wb, `Cotizacion_${client.replace(/\s+/g, '_')}.xlsx`);
+  }
+
+  function exportarJSON() {
+    const data = { catalog, quotes: JSON.parse(localStorage.getItem('protekta_quotes')) || [] };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `Protekta_Respaldo.json`; a.click();
+  }
+
+  function importarJSON(e) {
+    const reader = new FileReader();
+    if(e.target.files[0]) {
+      reader.readAsText(e.target.files[0], "UTF-8");
+      reader.onload = function(evt) {
+        try {
+          const res = JSON.parse(evt.target.result);
+          if(res.catalog) {
+            catalog = res.catalog;
+            localStorage.setItem('protekta_catalog', JSON.stringify(catalog));
+            localStorage.setItem('protekta_quotes', JSON.stringify(res.quotes));
+            actualizarSelects();
+            alert("Restaurado con éxito");
+            cerrarRespaldoModal();
+          }
+        } catch(err) { alert("Archivo inválido"); }
+      };
+    }
+  }
+
+  function enviarWhatsApp() {
+    const client = document.getElementById('clientName').value || "Cliente";
+    const total = document.getElementById('totalFinal').textContent;
+    let msg = `Hola *${client}*, presupuesto *PROTEKTA*:\n\n`;
+    document.querySelectorAll('.item-card').forEach(card => {
+      const desc = card.querySelector('.desc').value;
+      const qty = card.querySelector('.qty').value;
+      const amt = card.querySelector('.amount').textContent;
+      if(desc) msg += `• ${qty}x ${desc} - *${amt}*\n`;
+    });
+    msg += `\n*Total (IVA incl): ${total}*`;
+    const phone = document.getElementById('clientPhone').value.replace(/\D/g,'');
+    window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`, '_blank');
+  }
+</script>
+
+<script>
+  // Modo offline / app instalable (GitHub Pages)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+</script>
+</body>
+</html>
